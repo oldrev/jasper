@@ -1,6 +1,15 @@
 # Sandwych.Jasper
 
-A Lisp S-Expression style JSON predicate parser for Linq.
+A Lisp S-Expression style JSON predicate parser for LINQ.
+
+It works on all LINQ implemention, included: 
+
+* LINQ TO Objects
+* LINQ TO XML
+* NHibernate
+* EntityFramework Core
+* Dapper
+* etc...
 
 # Usage
 
