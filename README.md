@@ -2,10 +2,10 @@
 
 A Lisp S-Expression style JSON predicate parser for LINQ.
 
-It works on all LINQ implemention, included: 
+It works on all LINQ implementation, included: 
 
-* LINQ TO Objects
-* LINQ TO XML
+* LINQ to Objects
+* LINQ to XML
 * NHibernate
 * EntityFramework Core
 * Dapper
