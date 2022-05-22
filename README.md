@@ -5,6 +5,8 @@ A Lisp S-Expression style JSON predicate parser for Linq.
 # Usage
 
 ```csharp
+record class Employee(string Name, int Age);
+
 var employees = new Employee[] {
 	new Employee("Alice", 40),
 	new Employee("Bob", 41),
