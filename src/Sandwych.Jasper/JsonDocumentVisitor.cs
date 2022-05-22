@@ -8,10 +8,6 @@ using System.Text.Json;
 
 namespace Sandwych.Jasper {
 
-    /*
-     * ["and", ["=", "name", "Alice"], [">=", "age", 30], ["in", "dept", [1, 2, 3]]]
-     */
-
     public class JsonDocumentVisitor {
 
         private readonly ParameterExpression _lhs;
@@ -58,6 +54,7 @@ namespace Sandwych.Jasper {
                 ">=" => this.VisitGreaterEqualExpressionElement(element),
                 "<=" => this.VisitLesserEqualExpressionElement(element),
                 "in" => this.VisitInListExpressionElement(element),
+                "!in" => this.VisitNotInListExpressionElement(element),
                 _ => null,
             };
 
@@ -65,7 +62,8 @@ namespace Sandwych.Jasper {
         }
 
         private Expression VisitRightOperandElement(JsonElement lhs, JsonElement rhs) {
-            var pi= this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
+            //TODO 优化和重构，缓存反射数据
+            var pi = this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
             if (pi.PropertyType == typeof(int)) {
                 return Expression.Constant(rhs.GetInt32());
             }
@@ -77,7 +75,7 @@ namespace Sandwych.Jasper {
             }
         }
 
-        private Expression VisitLeftOperandElement(JsonElement e) {
+        private Expression VisitMemberAccessOperandElement(JsonElement e) {
             var props = e.GetString().Split('.');
             return this.AccessProperties(props);
         }
@@ -100,37 +98,45 @@ namespace Sandwych.Jasper {
         }
 
         private Expression VisitEqualExpressionElement(JsonElement e) {
-            var lhs = this.VisitLeftOperandElement(e[1]);
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var rhs = this.VisitRightOperandElement(e[1], e[2]);
             return Expression.Equal(lhs, rhs);
         }
 
         private Expression VisitLesserEqualExpressionElement(JsonElement e) {
-            var lhs = this.VisitLeftOperandElement(e[1]);
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var rhs = this.VisitRightOperandElement(e[1], e[2]);
             return Expression.LessThanOrEqual(lhs, rhs);
         }
 
         private Expression VisitGreaterEqualExpressionElement(JsonElement e) {
-            var lhs = this.VisitLeftOperandElement(e[1]);
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var rhs = this.VisitRightOperandElement(e[1], e[2]);
             return Expression.GreaterThanOrEqual(lhs, rhs);
         }
 
         private Expression VisitLesserExpressionElement(JsonElement e) {
-            var lhs = this.VisitLeftOperandElement(e[1]);
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var rhs = this.VisitRightOperandElement(e[1], e[2]);
             return Expression.LessThan(lhs, rhs);
         }
 
         private Expression VisitGreaterExpressionElement(JsonElement e) {
-            var lhs = this.VisitLeftOperandElement(e[1]);
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var rhs = this.VisitRightOperandElement(e[1], e[2]);
             return Expression.GreaterThan(lhs, rhs);
         }
 
         private Expression VisitInListExpressionElement(JsonElement e) {
-            var lhs = this.VisitLeftOperandElement(e[1]);
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
+            var args = e[2].EnumerateArray().Select(x =>
+                Expression.Equal(Expression.Constant((decimal)42), this.VisitConstantExpressionElement(x))
+            );
+            return args.Aggregate((x, y) => Expression.OrElse(x, y));
+        }
+
+        private Expression VisitNotInListExpressionElement(JsonElement e) {
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var args = e[2].EnumerateArray().Select(x =>
                 Expression.Equal(Expression.Constant((decimal)42), this.VisitConstantExpressionElement(x))
             );
