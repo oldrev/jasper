@@ -68,8 +68,17 @@ namespace Sandwych.Jasper {
             else if (pi.PropertyType == typeof(string)) {
                 return Expression.Constant(rhs.GetString());
             }
+            else if (pi.PropertyType == typeof(decimal)) {
+                return Expression.Constant(rhs.GetDecimal());
+            }
+            else if (pi.PropertyType == typeof(float)) {
+                return Expression.Constant(rhs.GetSingle());
+            }
+            else if (pi.PropertyType == typeof(double)) {
+                return Expression.Constant(rhs.GetDouble());
+            }
             else {
-                throw new NotSupportedException();
+                throw new NotImplementedException();
             }
         }
 
