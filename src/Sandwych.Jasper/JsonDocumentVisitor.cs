@@ -44,21 +44,19 @@ namespace Sandwych.Jasper {
                 throw new ParsingErrorException();
             }
             var opr = element[0].GetString();
-            var linqExpr = opr switch {
-                "and" => this.VisitAndExpressionElement(element),
-                "or" => this.VisitOrExpressionElement(element),
-                "not" => this.VisitOrExpressionElement(element),
-                "=" => this.VisitEqualExpressionElement(element),
-                ">" => this.VisitGreaterExpressionElement(element),
-                "<" => this.VisitLesserExpressionElement(element),
-                ">=" => this.VisitGreaterEqualExpressionElement(element),
-                "<=" => this.VisitLesserEqualExpressionElement(element),
-                "in" => this.VisitInListExpressionElement(element),
-                "!in" => this.VisitNotInListExpressionElement(element),
-                _ => null,
-            };
-
-            return linqExpr;
+            switch (opr) {
+                case "and": return this.VisitAndExpressionElement(element);
+                case "or": return this.VisitOrExpressionElement(element);
+                case "not": return this.VisitOrExpressionElement(element);
+                case "=": return this.VisitEqualExpressionElement(element);
+                case ">": return this.VisitGreaterExpressionElement(element);
+                case "<": return this.VisitLesserExpressionElement(element);
+                case ">=": return this.VisitGreaterEqualExpressionElement(element);
+                case "<=": return this.VisitLesserEqualExpressionElement(element);
+                case "in": return this.VisitInListExpressionElement(element);
+                case "!in": return this.VisitNotInListExpressionElement(element);
+                default: return null;
+            }
         }
 
         private Expression VisitRightOperandElement(JsonElement lhs, JsonElement rhs) {
@@ -67,7 +65,7 @@ namespace Sandwych.Jasper {
             if (pi.PropertyType == typeof(int)) {
                 return Expression.Constant(rhs.GetInt32());
             }
-            else if (pi.PropertyType == typeof(string)) { 
+            else if (pi.PropertyType == typeof(string)) {
                 return Expression.Constant(rhs.GetString());
             }
             else {
@@ -81,15 +79,17 @@ namespace Sandwych.Jasper {
         }
 
         private Expression VisitAndExpressionElement(JsonElement e) {
-            using var iter = e.EnumerateArray();
-            var args = iter.Skip(1).Select(x => this.VisitOperatorExpressionElement(x));
-            return args.Aggregate((x, y) => Expression.AndAlso(x, y));
+            using (var iter = e.EnumerateArray()) {
+                var args = iter.Skip(1).Select(x => this.VisitOperatorExpressionElement(x));
+                return args.Aggregate((x, y) => Expression.AndAlso(x, y));
+            }
         }
 
         private Expression VisitOrExpressionElement(JsonElement e) {
-            using var iter = e.EnumerateArray();
-            var args = iter.Skip(1).Select(x => this.VisitOperatorExpressionElement(x));
-            return args.Aggregate((x, y) => Expression.OrElse(x, y));
+            using (var iter = e.EnumerateArray()) {
+                var args = iter.Skip(1).Select(x => this.VisitOperatorExpressionElement(x));
+                return args.Aggregate((x, y) => Expression.OrElse(x, y));
+            }
         }
 
         private Expression VisitNotExpressionElement(JsonElement e) {
@@ -144,10 +144,11 @@ namespace Sandwych.Jasper {
         }
 
         private Expression VisitVectorExpressionElement(JsonElement element) {
-            using var iter = element.EnumerateArray();
-            var constants = iter.Select(x => this.VisitConstantExpressionElement(x));
-            var args = iter.Select(x => Expression.Constant(true) as Expression);
-            return args.Aggregate((x, y) => Expression.AndAlso(x, y));
+            using (var iter = element.EnumerateArray()) {
+                var constants = iter.Select(x => this.VisitConstantExpressionElement(x));
+                var args = iter.Select(x => Expression.Constant(true) as Expression);
+                return args.Aggregate((x, y) => Expression.AndAlso(x, y));
+            }
         }
 
         private Expression VisitConstantExpressionElement(JsonElement element) {

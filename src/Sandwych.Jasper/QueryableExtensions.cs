@@ -10,7 +10,7 @@ namespace Sandwych.Jasper {
 
     public static class QueryableExtensions {
 
-        public static IQueryable<TSource> Where<TSource>(this IQueryable<TSource> source,
+        public static IQueryable<TSource> WhereByJson<TSource>(this IQueryable<TSource> source,
             string json, IReadOnlyDictionary<string, object> symbols = null) {
             var doc = JsonDocument.Parse(json);
             var visitor = new JsonDocumentVisitor(typeof(TSource));

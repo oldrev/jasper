@@ -39,7 +39,7 @@ class Program {
             Console.WriteLine($"\t* {employee.Name}");
         }
 
-        var filteredEmployees = employees.AsQueryable().Where(json);
+        var filteredEmployees = employees.AsQueryable().WhereByJson(json);
 
         Console.WriteLine("\n>>>>>>>>>>> Filtered employees:");
         foreach (var employee in filteredEmployees) {
