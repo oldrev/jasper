@@ -24,15 +24,16 @@ var employees = new Employee[] {
 };
 
 var json = @"
-[""and"", 
-    ["">="", ""Age"", 35], 
-    [""or"",
-        [""="", ""Name"", ""Alice""], 
-        ["">"", ""Age"", 45] 
-    ]
-]";
 
-var filteredEmployees = employees.AsQueryable().Where(json);
+[
+	""and"", 
+    ["">="", ""Age"", 35], 
+    [""or"", [""="", ""Name"", ""Alice""], ["">"", ""Age"", 45]]
+]
+
+";
+
+var filteredEmployees = employees.AsQueryable().WhereByJson(json);
 
 // Equals to LINQ lambda: 
 // employees.AsQueryable().Where(x => x.Age >= 35 && (x.Name == "Alice" || x.Age > 45))

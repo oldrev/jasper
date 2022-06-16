@@ -25,14 +25,13 @@ class Program {
         };
 
         var json = @"
-[""and"", 
+[
+    ""and"", 
     ["">="", ""Age"", 35], 
     [""="", ""DepartmentId"", 1],
-    [""or"",
-        [""="", ""Name"", ""Alice""], 
-        ["">"", ""Age"", 45]
-    ]
-]";
+    [""or"", [""="", ""Name"", ""Alice""], ["">"", ""Age"", 45]]
+]
+";
 
         Console.WriteLine(">>>>>>>>>>> All employees:");
         foreach (var employee in employees) {
