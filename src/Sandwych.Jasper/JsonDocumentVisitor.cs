@@ -59,7 +59,7 @@ namespace Sandwych.Jasper {
             }
         }
 
-        private Expression VisitRightOperandElement(JsonElement lhs, JsonElement rhs) {
+        private Expression VisitPropertyOperandElement(JsonElement lhs, JsonElement rhs) {
             //TODO 优化和重构，缓存反射数据
             var pi = this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
             if (pi.PropertyType == typeof(int)) {
@@ -108,31 +108,31 @@ namespace Sandwych.Jasper {
 
         private Expression VisitEqualExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
-            var rhs = this.VisitRightOperandElement(e[1], e[2]);
+            var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
             return Expression.Equal(lhs, rhs);
         }
 
         private Expression VisitLesserEqualExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
-            var rhs = this.VisitRightOperandElement(e[1], e[2]);
+            var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
             return Expression.LessThanOrEqual(lhs, rhs);
         }
 
         private Expression VisitGreaterEqualExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
-            var rhs = this.VisitRightOperandElement(e[1], e[2]);
+            var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
             return Expression.GreaterThanOrEqual(lhs, rhs);
         }
 
         private Expression VisitLesserExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
-            var rhs = this.VisitRightOperandElement(e[1], e[2]);
+            var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
             return Expression.LessThan(lhs, rhs);
         }
 
         private Expression VisitGreaterExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
-            var rhs = this.VisitRightOperandElement(e[1], e[2]);
+            var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
             return Expression.GreaterThan(lhs, rhs);
         }
 
