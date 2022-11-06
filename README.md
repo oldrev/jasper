@@ -2,7 +2,7 @@
 
 A Lisp S-Expression style JSON predicate parser for LINQ.
 
-It works on all LINQ implementation, included: 
+It works on all LINQ implementation, including: 
 
 * LINQ to Objects
 * LINQ to XML
