@@ -8,12 +8,12 @@ using System.Text.Json;
 
 namespace Sandwych.Jasper {
 
-    public class JsonDocumentVisitor {
+    public struct PredicateJsonDocumentVisitor {
 
         private readonly ParameterExpression _lhs;
         private readonly Type _lhsType;
 
-        public JsonDocumentVisitor(Type lhsType) {
+        public PredicateJsonDocumentVisitor(Type lhsType) {
             _lhsType = lhsType;
             _lhs = Expression.Parameter(lhsType);
         }
@@ -37,31 +37,30 @@ namespace Sandwych.Jasper {
             return expr;
         }
 
-        public (BinaryExpression, int) Foo() { throw new NotImplementedException(); }
-
         private Expression VisitOperatorExpressionElement(JsonElement element) {
             if (element.GetArrayLength() < 1) {
                 throw new ParsingErrorException();
             }
             var opr = element[0].GetString();
-            switch (opr) {
-                case "and": return this.VisitAndExpressionElement(element);
-                case "or": return this.VisitOrExpressionElement(element);
-                case "not": return this.VisitOrExpressionElement(element);
-                case "=": return this.VisitEqualExpressionElement(element);
-                case ">": return this.VisitGreaterExpressionElement(element);
-                case "<": return this.VisitLesserExpressionElement(element);
-                case ">=": return this.VisitGreaterEqualExpressionElement(element);
-                case "<=": return this.VisitLesserEqualExpressionElement(element);
-                case "in": return this.VisitInListExpressionElement(element);
-                case "!in": return this.VisitNotInListExpressionElement(element);
-                default: return null;
-            }
+            return opr switch {
+                "and" => this.VisitAndExpressionElement(element),
+                "or" => this.VisitOrExpressionElement(element),
+                "not" => this.VisitNotExpressionElement(element),
+                "=" => this.VisitEqualExpressionElement(element),
+                ">" => this.VisitGreaterExpressionElement(element),
+                "<" => this.VisitLesserExpressionElement(element),
+                ">=" => this.VisitGreaterEqualExpressionElement(element),
+                "<=" => this.VisitLesserEqualExpressionElement(element),
+                "in" => this.VisitInListExpressionElement(element),
+                "!in" => this.VisitNotInListExpressionElement(element),
+                _ => throw new NotSupportedException($"Not supported operator: '{opr}'"),
+            };
         }
 
         private Expression VisitPropertyOperandElement(JsonElement lhs, JsonElement rhs) {
             //TODO 优化和重构，缓存反射数据
             var pi = this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
+
             if (pi.PropertyType == typeof(int)) {
                 return Expression.Constant(rhs.GetInt32());
             }
@@ -88,17 +87,15 @@ namespace Sandwych.Jasper {
         }
 
         private Expression VisitAndExpressionElement(JsonElement e) {
-            using (var iter = e.EnumerateArray()) {
-                var args = iter.Skip(1).Select(x => this.VisitOperatorExpressionElement(x));
-                return args.Aggregate((x, y) => Expression.AndAlso(x, y));
-            }
+            using var iter = e.EnumerateArray();
+            var args = iter.Skip(1).Select(VisitOperatorExpressionElement);
+            return args.Aggregate((x, y) => Expression.AndAlso(x, y));
         }
 
         private Expression VisitOrExpressionElement(JsonElement e) {
-            using (var iter = e.EnumerateArray()) {
-                var args = iter.Skip(1).Select(x => this.VisitOperatorExpressionElement(x));
-                return args.Aggregate((x, y) => Expression.OrElse(x, y));
-            }
+            using var iter = e.EnumerateArray();
+            var args = iter.Skip(1).Select(VisitOperatorExpressionElement);
+            return args.Aggregate((x, y) => Expression.OrElse(x, y));
         }
 
         private Expression VisitNotExpressionElement(JsonElement e) {
@@ -136,61 +133,47 @@ namespace Sandwych.Jasper {
             return Expression.GreaterThan(lhs, rhs);
         }
 
+
         private Expression VisitInListExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
+            var self = this;
             var args = e[2].EnumerateArray().Select(x =>
-                Expression.Equal(Expression.Constant((decimal)42), this.VisitConstantExpressionElement(x))
+                Expression.Equal(lhs, self.VisitConstantExpressionElement(x))
             );
             return args.Aggregate((x, y) => Expression.OrElse(x, y));
+            // var rhs = Expression.Constant(e[2].EnumerateArray().ToArray());
+            // return Expression.Call(rhs, "Contains", Type.EmptyTypes, lhs);
         }
 
         private Expression VisitNotInListExpressionElement(JsonElement e) {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
-            var args = e[2].EnumerateArray().Select(x =>
-                Expression.Equal(Expression.Constant((decimal)42), this.VisitConstantExpressionElement(x))
-            );
-            return args.Aggregate((x, y) => Expression.OrElse(x, y));
+            var rhs = e[2].EnumerateArray();
+            return Expression.Not(Expression.Call(lhs, "Contains", Type.EmptyTypes, lhs));
         }
 
         private Expression VisitVectorExpressionElement(JsonElement element) {
-            using (var iter = element.EnumerateArray()) {
-                var constants = iter.Select(x => this.VisitConstantExpressionElement(x));
-                var args = iter.Select(x => Expression.Constant(true) as Expression);
-                return args.Aggregate((x, y) => Expression.AndAlso(x, y));
-            }
+            using var iter = element.EnumerateArray();
+            var constants = iter.Select(VisitConstantExpressionElement);
+            var args = iter.Select(x => Expression.Constant(true) as Expression);
+            return args.Aggregate((x, y) => Expression.AndAlso(x, y));
         }
 
-        private Expression VisitConstantExpressionElement(JsonElement element) {
-            switch (element.ValueKind) {
-                case JsonValueKind.String:
-                    return Expression.Constant(element.GetString());
-                case JsonValueKind.Number:
-                    return Expression.Constant(element.GetDecimal());
-                case JsonValueKind.True:
-                    return Expression.Constant(true);
-                case JsonValueKind.False:
-                    return Expression.Constant(false);
-                case JsonValueKind.Null:
-                    return Expression.Constant(null);
-
-                default:
-                    throw new ParsingErrorException();
-            }
-        }
+        private Expression VisitConstantExpressionElement(JsonElement element ) =>
+            element.ValueKind switch {
+                JsonValueKind.String => Expression.Constant(element.GetString()),
+                JsonValueKind.Number => Expression.Constant(element.GetDecimal()),
+                JsonValueKind.True => Expression.Constant(true),
+                JsonValueKind.False => Expression.Constant(false),
+                JsonValueKind.Null => Expression.Constant(null),
+                _ => throw new ParsingErrorException(),
+            };
 
         private Expression AccessProperties(IEnumerable<string> props) {
-            var expr = MakeMemberAccessExpression(_lhs, props.First());
+            var expr = Expression.PropertyOrField(_lhs, props.First());
             foreach (var p in props.Skip(1)) {
-                expr = MakeMemberAccessExpression(expr, p);
+                expr = Expression.Property(expr, p);
             }
             return expr;
-        }
-
-        private Expression MakeMemberAccessExpression(Expression objectExpr, string propertyName) {
-            //var propertyExpr = Expression.PropertyOrField(objectExpr, propertyName);
-            MemberInfo mi = GetPropertyOrFieldInfo(objectExpr.Type, propertyName);
-
-            return Expression.MakeMemberAccess(objectExpr, mi);
         }
 
         private PropertyInfo GetPropertyOrFieldInfo(Type objectType, string propertyName) {
@@ -204,9 +187,6 @@ namespace Sandwych.Jasper {
             }
             return mi;
         }
-
-
-
 
     }
 

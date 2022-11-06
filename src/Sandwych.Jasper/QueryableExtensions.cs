@@ -20,7 +20,7 @@ namespace Sandwych.Jasper {
         public static IQueryable<TSource> WhereByJson<TSource>(this IQueryable<TSource> source,
             JsonDocument jsonDoc, IReadOnlyDictionary<string, object> symbols = null) {
 
-            var visitor = new JsonDocumentVisitor(typeof(TSource));
+            var visitor = new PredicateJsonDocumentVisitor(typeof(TSource));
             var predicate = visitor.ToPredicate(jsonDoc);
 
             var linqWhereType = Where_TSource_2(typeof(TSource));
