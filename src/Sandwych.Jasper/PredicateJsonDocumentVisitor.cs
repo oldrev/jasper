@@ -58,23 +58,17 @@ namespace Sandwych.Jasper {
         }
 
         private Expression VisitPropertyOperandElement(JsonElement lhs, JsonElement rhs) {
-            //TODO 优化和重构，缓存反射数据
-            var pi = this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
+            // TODO 优化和重构，缓存反射数据
+            // var pi = this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
 
-            if (pi.PropertyType == typeof(int)) {
-                return Expression.Constant(rhs.GetInt32());
-            }
-            else if (pi.PropertyType == typeof(string)) {
-                return Expression.Constant(rhs.GetString());
-            }
-            else if (pi.PropertyType == typeof(decimal)) {
+            if (rhs.ValueKind == JsonValueKind.Number) {
                 return Expression.Constant(rhs.GetDecimal());
             }
-            else if (pi.PropertyType == typeof(float)) {
-                return Expression.Constant(rhs.GetSingle());
+            else if (rhs.ValueKind == JsonValueKind.String) {
+                return Expression.Constant(rhs.GetString());
             }
-            else if (pi.PropertyType == typeof(double)) {
-                return Expression.Constant(rhs.GetDouble());
+            else if (rhs.ValueKind == JsonValueKind.True || rhs.ValueKind == JsonValueKind.False) {
+                return Expression.Constant(rhs.GetBoolean());
             }
             else {
                 throw new NotImplementedException();
