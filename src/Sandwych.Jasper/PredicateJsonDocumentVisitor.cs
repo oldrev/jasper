@@ -59,15 +59,18 @@ namespace Sandwych.Jasper {
 
         private Expression VisitPropertyOperandElement(JsonElement lhs, JsonElement rhs) {
             // TODO 优化和重构，缓存反射数据
-            // var pi = this.GetPropertyOrFieldInfo(_lhsType, lhs.GetString());
+            var pi = this.GetLeafPropertyOrFieldInfo(_lhsType, lhs.GetString());
 
-            if (rhs.ValueKind == JsonValueKind.Number) {
+            if (pi.PropertyType == typeof(int)) {
+                return Expression.Constant(rhs.GetInt32());
+            }
+            else if (pi.PropertyType == typeof(decimal)) {
                 return Expression.Constant(rhs.GetDecimal());
             }
-            else if (rhs.ValueKind == JsonValueKind.String) {
+            else if (pi.PropertyType == typeof(string)) {
                 return Expression.Constant(rhs.GetString());
             }
-            else if (rhs.ValueKind == JsonValueKind.True || rhs.ValueKind == JsonValueKind.False) {
+            else if (pi.PropertyType == typeof(bool)) {
                 return Expression.Constant(rhs.GetBoolean());
             }
             else {
@@ -168,6 +171,16 @@ namespace Sandwych.Jasper {
                 expr = Expression.Property(expr, p);
             }
             return expr;
+        }
+
+        private PropertyInfo GetLeafPropertyOrFieldInfo(Type objectType, string navProp) {
+            var props = navProp.Split('.');
+            var pi = this.GetPropertyOrFieldInfo(objectType, props.First());
+            var restProps = props.Skip(1);
+            foreach (var subPropName in restProps) {
+                pi = this.GetPropertyOrFieldInfo(pi.PropertyType, subPropName);
+            }
+            return pi;
         }
 
         private PropertyInfo GetPropertyOrFieldInfo(Type objectType, string propertyName) {
