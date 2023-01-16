@@ -6,9 +6,9 @@ It works on all LINQ implementation, including:
 
 * LINQ to Objects
 * LINQ to XML
+* LINQ to DB
 * NHibernate
 * EntityFramework Core
-* Dapper
 * etc...
 
 # Usage
