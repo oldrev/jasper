@@ -24,16 +24,19 @@ class Program {
             new Employee("Ethan", 60, 2),
         };
 
-        var json = @"
+        var json = 
+"""
 [
-    ""and"", 
-    ["">="", ""Age"", 35], 
-    [""="", ""DepartmentId"", 1],
-    [""or"", [""="", ""Name"", ""Alice""], ["">"", ""Age"", 45]]
+    "and", 
+    [">=", "Age", 35], 
+    ["=", "DepartmentId", 1],
+    ["or", ["=", "Name", "Alice"], [">", "Age", 45]]
 ]
-";
+""";
+        Console.WriteLine("The JSON AST:");
+        Console.WriteLine(json);
 
-        Console.WriteLine(">>>>>>>>>>> All employees:");
+        Console.WriteLine("\n>>>>>>>>>>> All employees:");
         foreach (var employee in employees) {
             Console.WriteLine($"\t* {employee.Name}");
         }

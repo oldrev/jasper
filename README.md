@@ -23,15 +23,15 @@ var employees = new Employee[] {
 	new Employee("Ethan", 60),
 };
 
-var json = @"
+var json = """
 
 [
-	""and"", 
-    ["">="", ""Age"", 35], 
-    [""or"", [""="", ""Name"", ""Alice""], ["">"", ""Age"", 45]]
+	"and", 
+    [">=", "Age", 35], 
+    ["or", ["=", "Name", "Alice"], [">", "Age", 45]]
 ]
 
-";
+""";
 
 var filteredEmployees = employees.AsQueryable().WhereByJson(json);
 

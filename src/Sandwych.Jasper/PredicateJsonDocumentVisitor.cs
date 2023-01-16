@@ -33,11 +33,40 @@ namespace Sandwych.Jasper {
                 return null;
             }
 
-            var expr = this.VisitOperatorExpressionElement(element);
+            var expr = this.VisitFirstLevelAvailableOperatorExpressionElement(element);
             return expr;
         }
 
-        private Expression VisitOperatorExpressionElement(JsonElement element) {
+        private Expression VisitLogicalOperatorExpressionElement(JsonElement element) {
+            if (element.GetArrayLength() < 1) {
+                throw new ParsingErrorException();
+            }
+            var opr = element[0].GetString();
+            return opr switch {
+                "and" => this.VisitAndExpressionElement(element),
+                "or" => this.VisitOrExpressionElement(element),
+                "not" => this.VisitNotExpressionElement(element),
+                _ => throw new NotSupportedException($"Invalid logical operator: '{opr}'"),
+            };
+        }
+
+        private Expression VisitComparsionOperatorExpressionElement(JsonElement element) {
+            if (element.GetArrayLength() < 1) {
+                throw new ParsingErrorException();
+            }
+            var opr = element[0].GetString();
+            return opr switch {
+                "=" => this.VisitEqualExpressionElement(element),
+                "!=" => this.VisitNotEqualExpressionElement(element),
+                ">" => this.VisitGreaterExpressionElement(element),
+                "<" => this.VisitLesserExpressionElement(element),
+                ">=" => this.VisitGreaterEqualExpressionElement(element),
+                "<=" => this.VisitLesserEqualExpressionElement(element),
+                _ => throw new NotSupportedException($"Invalid comparsion operator: '{opr}'"),
+            };
+        }
+
+        private Expression VisitFirstLevelAvailableOperatorExpressionElement(JsonElement element) {
             if (element.GetArrayLength() < 1) {
                 throw new ParsingErrorException();
             }
@@ -47,6 +76,7 @@ namespace Sandwych.Jasper {
                 "or" => this.VisitOrExpressionElement(element),
                 "not" => this.VisitNotExpressionElement(element),
                 "=" => this.VisitEqualExpressionElement(element),
+                "!=" => this.VisitNotEqualExpressionElement(element),
                 ">" => this.VisitGreaterExpressionElement(element),
                 "<" => this.VisitLesserExpressionElement(element),
                 ">=" => this.VisitGreaterEqualExpressionElement(element),
@@ -85,18 +115,18 @@ namespace Sandwych.Jasper {
 
         private Expression VisitAndExpressionElement(JsonElement e) {
             using var iter = e.EnumerateArray();
-            var args = iter.Skip(1).Select(VisitOperatorExpressionElement);
+            var args = iter.Skip(1).Select(VisitFirstLevelAvailableOperatorExpressionElement);
             return args.Aggregate((x, y) => Expression.AndAlso(x, y));
         }
 
         private Expression VisitOrExpressionElement(JsonElement e) {
             using var iter = e.EnumerateArray();
-            var args = iter.Skip(1).Select(VisitOperatorExpressionElement);
+            var args = iter.Skip(1).Select(VisitFirstLevelAvailableOperatorExpressionElement);
             return args.Aggregate((x, y) => Expression.OrElse(x, y));
         }
 
         private Expression VisitNotExpressionElement(JsonElement e) {
-            var expr = this.VisitOperatorExpressionElement(e[1]);
+            var expr = this.VisitFirstLevelAvailableOperatorExpressionElement(e[1]);
             return Expression.Not(expr);
         }
 
@@ -104,6 +134,12 @@ namespace Sandwych.Jasper {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
             return Expression.Equal(lhs, rhs);
+        }
+
+        private Expression VisitNotEqualExpressionElement(JsonElement e) {
+            var lhs = this.VisitMemberAccessOperandElement(e[1]);
+            var rhs = this.VisitPropertyOperandElement(e[1], e[2]);
+            return Expression.NotEqual(lhs, rhs);
         }
 
         private Expression VisitLesserEqualExpressionElement(JsonElement e) {
@@ -135,7 +171,7 @@ namespace Sandwych.Jasper {
             var lhs = this.VisitMemberAccessOperandElement(e[1]);
             var self = this;
             var args = e[2].EnumerateArray().Select(x =>
-                Expression.Equal(lhs, self.VisitConstantExpressionElement(x))
+                Expression.Equal(lhs, self.VisitConstantValueExpressionElement(x))
             );
             return args.Aggregate((x, y) => Expression.OrElse(x, y));
             // var rhs = Expression.Constant(e[2].EnumerateArray().ToArray());
@@ -150,12 +186,12 @@ namespace Sandwych.Jasper {
 
         private Expression VisitVectorExpressionElement(JsonElement element) {
             using var iter = element.EnumerateArray();
-            var constants = iter.Select(VisitConstantExpressionElement);
+            var constants = iter.Select(VisitConstantValueExpressionElement);
             var args = iter.Select(x => Expression.Constant(true) as Expression);
             return args.Aggregate((x, y) => Expression.AndAlso(x, y));
         }
 
-        private Expression VisitConstantExpressionElement(JsonElement element ) =>
+        private Expression VisitConstantValueExpressionElement(JsonElement element ) =>
             element.ValueKind switch {
                 JsonValueKind.String => Expression.Constant(element.GetString()),
                 JsonValueKind.Number => Expression.Constant(element.GetDecimal()),
