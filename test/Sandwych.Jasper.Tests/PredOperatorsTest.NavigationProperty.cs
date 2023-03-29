@@ -12,9 +12,7 @@ public partial class PredOperatorsTest {
             new KeyValuePair<string, decimal>("ccc", 3),
         };
 
-        var json = @"
-[""="", ""Key.Length"", 2]
-";
+        var json = """["=", "Key.Length", 2]""";
         var filteredByJson = pairs.AsQueryable().WhereByJson(json).ToArray();
         var filteredByLinq = pairs.Where(x => x.Key.Length == 2).ToArray();
         Assert.Equal(filteredByLinq, filteredByJson);

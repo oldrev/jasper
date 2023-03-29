@@ -12,13 +12,13 @@ public partial class PredOperatorsTest {
             new KeyValuePair<string, decimal>("c", 3),
         };
 
-        var json = @"
-[
-    ""and"", 
-    [""="", ""Key"", ""b""],
-    [""="", ""Value"", 2]
-]
-";
+        var json = """
+        [
+            "and", 
+            ["=", "Key", "b"],
+            ["=", "Value", 2]
+        ]
+        """;
         var filteredByJson = pairs.AsQueryable().WhereByJson(json).ToArray();
         var filteredByLinq = pairs.Where(x => x.Key == "b" && x.Value == 2).ToArray();
         Assert.Equal(filteredByLinq, filteredByJson);
@@ -32,13 +32,13 @@ public partial class PredOperatorsTest {
             new KeyValuePair<string, decimal>("c", 3),
         };
 
-        var json = @"
-[
-    ""or"", 
-    [""="", ""Key"", ""b""],
-    [""="", ""Value"", 1]
-]
-";
+        var json = """
+        [
+            "or", 
+            ["=", "Key", "b"],
+            ["=", "Value", 1]
+        ]
+        """;
         var filteredByJson = pairs.AsQueryable().WhereByJson(json).ToArray();
         var filteredByLinq = pairs.Where(x => x.Key == "b" || x.Value == 1).ToArray();
         Assert.Equal(filteredByLinq, filteredByJson);
@@ -52,13 +52,13 @@ public partial class PredOperatorsTest {
             new KeyValuePair<string, decimal>("c", 3),
         };
 
-        var json = @"
-[
-    ""and"", 
-    [""="", ""Key"", ""b""],
-    [""not"", [""="", ""Value"", 1]]
-]
-";
+        var json = """
+        [
+            "and", 
+            ["=", "Key", "b"],
+            ["not", ["=", "Value", 1]]
+        ]
+        """;
         var filteredByJson = pairs.AsQueryable().WhereByJson(json).ToArray();
         var filteredByLinq = pairs.Where(x => x.Key == "b" && !(x.Value == 1)).ToArray();
         Assert.Equal(filteredByLinq, filteredByJson);

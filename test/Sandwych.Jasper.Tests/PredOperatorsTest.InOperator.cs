@@ -12,13 +12,13 @@ public partial class PredOperatorsTest {
             new KeyValuePair<string, decimal>("c", 3),
         };
 
-        var json = @"
-[
-    ""and"", 
-    [""in"", ""Value"", [1, 2]], 
-    [""="", ""Key"", ""b""]
-]
-";
+        var json = """
+            [
+                "and", 
+                ["in", "Value", [1, 2]], 
+                ["=", "Key", "b"]
+            ]
+        """;
         var filteredByJson = pairs.AsQueryable().WhereByJson(json).ToArray();
         var filteredByLinq = pairs.Where(x => (x.Value == 1 || x.Value == 2) && x.Key == "b").ToArray();
         Assert.Equal(filteredByLinq, filteredByJson);
@@ -32,7 +32,7 @@ public partial class PredOperatorsTest {
             new KeyValuePair<string, decimal>("c", 3),
         };
 
-        var json = "[\"in\", \"Value\", [1, 2]]";
+        var json = """["in", "Value", [1, 2]]""";
         var filteredByJson = pairs.AsQueryable().WhereByJson(json).ToArray();
         var filteredByLinq = pairs.Where(x => (x.Value == 1 || x.Value == 2)).ToArray();
         Assert.Equal(filteredByLinq, filteredByJson);
